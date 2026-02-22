@@ -65,11 +65,14 @@ export interface EduMateContextState {
     removeAppointment: (id: string) => void;
     activeAlerts: ActiveAlert[];
     dismissAlert: (id: string) => void;
+    startMedicationConsult: () => Promise<void>;
+    isMounted: boolean;
 }
 
 const EduMateContext = createContext<EduMateContextState | undefined>(undefined);
 
 export const EduMateProvider = ({ children }: { children: ReactNode }) => {
+    const [isMounted, setIsMounted] = useState(false);
     const [userName, setUserName] = useState<string>('');
     const [userInterests, setUserInterests] = useState<string>('Familia');
     const [otherInterests, setOtherInterests] = useState<string>('');
@@ -105,6 +108,45 @@ export const EduMateProvider = ({ children }: { children: ReactNode }) => {
     const dismissAlert = useCallback((id: string) => {
         setActiveAlerts(prev => prev.filter(a => a.id !== id));
     }, []);
+
+    // Load from localStorage on mount
+    React.useEffect(() => {
+        setIsMounted(true);
+        try {
+            const savedState = localStorage.getItem('eduMateState');
+            if (savedState) {
+                const parsed = JSON.parse(savedState);
+                if (parsed.userName) setUserName(parsed.userName);
+                if (parsed.userInterests) setUserInterests(parsed.userInterests);
+                if (parsed.otherInterests) setOtherInterests(parsed.otherInterests);
+                if (parsed.aiName) setAiName(parsed.aiName);
+                if (parsed.learningProfile) setLearningProfile(parsed.learningProfile);
+                if (parsed.medications) setMedications(parsed.medications);
+                if (parsed.appointments) setAppointments(parsed.appointments);
+            }
+        } catch (error) {
+            console.error('Error parsing localStorage:', error);
+        }
+    }, []);
+
+    // Save to localStorage when state changes
+    React.useEffect(() => {
+        if (!isMounted) return;
+        try {
+            const stateToSave = {
+                userName,
+                userInterests,
+                otherInterests,
+                aiName,
+                learningProfile,
+                medications,
+                appointments
+            };
+            localStorage.setItem('eduMateState', JSON.stringify(stateToSave));
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+    }, [isMounted, userName, userInterests, otherInterests, aiName, learningProfile, medications, appointments]);
 
     React.useEffect(() => {
         const checkSchedules = () => {
@@ -254,6 +296,34 @@ Regla de Oro: Inicia la interacción saludando a ${userName} de forma muy cálid
         }
     }, [isGenerating, userName]);
 
+    const startMedicationConsult = useCallback(async () => {
+        if (isGenerating || medications.length === 0) return;
+
+        setActiveTab('tutor');
+        setMessages([]);
+        setIsGenerating(true);
+
+        try {
+            const medsContext = medications.map(m => `- ${m.name} (${m.dose}): ${m.descripcionVisual}, a las ${m.time}. Observaciones: ${m.observaciones || 'Ninguna'}`).join('\n');
+            const prompt = `INSTRUCCIÓN DE SISTEMA: Actúa como un asistente virtual de apoyo al paciente. El usuario tiene registrada actualmente la siguiente medicación:\n${medsContext}\n\nEl usuario te va a consultar sobre estos medicamentos. IMPORTANTE: Proporciona información general basada en los prospectos. Bajo ninguna circunstancia des consejos médicos, cambies dosis, ni sugieras diagnósticos. Termina SIEMPRE tu respuesta obligatoriamente con esta frase exacta: ⚠️ Recuerda que soy una IA de apoyo. Para cualquier duda importante o cambio en tu tratamiento, debes consultar siempre con tu médico o farmacéutico. Haz ahora una breve introducción preguntándole al usuario: "¿En qué puedo ayudarte hoy con tu medicación?" y muestra amabilidad.`;
+
+            const apiMessages = [{ role: 'system', content: prompt }] as const;
+            // @ts-ignore
+            const responseText = await aiService.generate(apiMessages);
+
+            setMessages([{
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: responseText,
+                timestamp: Date.now(),
+            }]);
+        } catch (error) {
+            console.error('Error starting medication consult:', error);
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [isGenerating, medications]);
+
     const sendMessage = useCallback(async (text: string) => {
         if (!text.trim() || isGenerating) return;
 
@@ -348,8 +418,14 @@ REGLA DE EMPATÍA: Si el usuario te saluda y ves que tiene una cita HOY o MAÑAN
         addAppointment,
         removeAppointment,
         activeAlerts,
-        dismissAlert
+        dismissAlert,
+        startMedicationConsult,
+        isMounted
     };
+
+    if (!isMounted) {
+        return null;
+    }
 
     return <EduMateContext.Provider value={value}>{children}</EduMateContext.Provider>;
 };

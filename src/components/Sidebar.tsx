@@ -5,7 +5,7 @@ import { useEduMate } from '../context/EduMateContext';
 import { Bot, CheckSquare, TrendingUp, Stethoscope, UserCircle, HeartPulse, Pill } from 'lucide-react';
 
 export default function Sidebar() {
-    const { activeTab, setActiveTab, aiName } = useEduMate();
+    const { activeTab, setActiveTab, aiName, startMedicationConsult } = useEduMate();
 
     return (
         <aside className="h-screen w-64 bg-white border-r border-slate-200 flex flex-col justify-between p-4 shadow-sm flex-shrink-0">
@@ -69,6 +69,19 @@ export default function Sidebar() {
                         <Pill className={`w-5 h-5 ${activeTab === 'hoja_farmacia' ? 'text-rose-600' : ''}`} />
                         <span className="flex-1 text-left uppercase text-sm font-bold tracking-wider">Hoja de Farmacia</span>
                     </button>
+
+                    {/* New Medication Consultation Button */}
+                    <div className="mt-4 border-t border-slate-100 pt-4">
+                        <button
+                            onClick={startMedicationConsult}
+                            className="flex items-center gap-3 w-full p-3 rounded-xl font-medium transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg focus:ring-2 focus:ring-emerald-500/50 active:scale-95 group"
+                        >
+                            <div className="bg-white/20 p-1.5 rounded-lg group-hover:bg-white/30 transition-colors">
+                                <Bot className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="flex-1 text-left text-sm font-bold leading-tight">Consultar a la IA sobre mi medicación</span>
+                        </button>
+                    </div>
                 </nav>
             </div>
         </aside>
