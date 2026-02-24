@@ -7,7 +7,7 @@ export default function PharmacySheet() {
     const [copied, setCopied] = React.useState(false);
 
     const handleCopy = () => {
-        const text = medications.map(m => `- ${m.name}: ${m.dose} (${m.time})`).join('\n');
+        const text = medications.map(m => `- ${m.name}: ${m.dose} (${m.dosesPerDay} tomas diarias: ${m.times?.join(', ')})`).join('\n');
         navigator.clipboard.writeText(`Mi Hoja de Medicación Actualizada:\n\n${text}`);
         setCopied(true);
         setTimeout(() => setCopied(false), 3000);
@@ -51,8 +51,17 @@ export default function PharmacySheet() {
                                     <p className="text-3xl font-bold text-slate-800">{med.name}</p>
                                     <p className="text-2xl text-slate-600 font-medium">{med.dose}</p>
                                 </div>
-                                <div className="bg-white border-2 border-slate-200 rounded-xl px-6 py-3 shadow-sm">
-                                    <span className="text-3xl font-bold text-rose-700 tabular-nums tracking-wide">{med.time}</span>
+                                <div className="text-right">
+                                    <div className="bg-white border-2 border-slate-200 rounded-xl px-4 py-2 shadow-sm inline-block mb-2">
+                                        <span className="text-lg font-bold text-slate-700">{med.dosesPerDay} tomas diarias</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 justify-end">
+                                        {med.times?.map((t, i) => (
+                                            <span key={i} className="bg-rose-100 text-rose-700 border border-rose-200 rounded-lg px-4 py-2 font-bold text-xl tabular-nums shadow-sm">
+                                                {t}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         ))}

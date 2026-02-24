@@ -17,7 +17,8 @@ export interface Medication {
     name: string;
     dose: string;
     descripcionVisual: string;
-    time: string; // HH:MM
+    times: string[]; // array of HH:MM
+    dosesPerDay: number;
     observaciones: string;
 }
 
@@ -33,6 +34,11 @@ export interface ActiveAlert {
     type: 'medication' | 'appointment';
     title: string;
     message: string;
+}
+
+export interface UserStats {
+    gamesPlayed: number;
+    gamesWon: number;
 }
 
 export interface EduMateContextState {
@@ -67,6 +73,9 @@ export interface EduMateContextState {
     dismissAlert: (id: string) => void;
     startMedicationConsult: () => Promise<void>;
     isMounted: boolean;
+    userStats: UserStats;
+    updateUserStats: (won: boolean) => void;
+    resetUserStats: () => void;
 }
 
 const EduMateContext = createContext<EduMateContextState | undefined>(undefined);
@@ -87,6 +96,7 @@ export const EduMateProvider = ({ children }: { children: ReactNode }) => {
     const [medications, setMedications] = useState<Medication[]>([]);
     const [appointments, setAppointments] = useState<MedicalAppointment[]>([]);
     const [activeAlerts, setActiveAlerts] = useState<ActiveAlert[]>([]);
+    const [userStats, setUserStats] = useState<UserStats>({ gamesPlayed: 0, gamesWon: 0 });
     const alertedInstances = React.useRef<Set<string>>(new Set());
 
     const addMedication = useCallback((med: Omit<Medication, 'id'>) => {
@@ -121,8 +131,18 @@ export const EduMateProvider = ({ children }: { children: ReactNode }) => {
                 if (parsed.otherInterests) setOtherInterests(parsed.otherInterests);
                 if (parsed.aiName) setAiName(parsed.aiName);
                 if (parsed.learningProfile) setLearningProfile(parsed.learningProfile);
-                if (parsed.medications) setMedications(parsed.medications);
+                if (parsed.medications) {
+                    const migratedMeds = parsed.medications.map((med: any) => {
+                        if (med.time !== undefined) {
+                            const { time, ...rest } = med;
+                            return { ...rest, times: [time], dosesPerDay: 1 };
+                        }
+                        return med;
+                    });
+                    setMedications(migratedMeds);
+                }
                 if (parsed.appointments) setAppointments(parsed.appointments);
+                if (parsed.userStats) setUserStats(parsed.userStats);
             }
         } catch (error) {
             console.error('Error parsing localStorage:', error);
@@ -140,13 +160,14 @@ export const EduMateProvider = ({ children }: { children: ReactNode }) => {
                 aiName,
                 learningProfile,
                 medications,
-                appointments
+                appointments,
+                userStats
             };
             localStorage.setItem('eduMateState', JSON.stringify(stateToSave));
         } catch (error) {
             console.error('Error saving to localStorage:', error);
         }
-    }, [isMounted, userName, userInterests, otherInterests, aiName, learningProfile, medications, appointments]);
+    }, [isMounted, userName, userInterests, otherInterests, aiName, learningProfile, medications, appointments, userStats]);
 
     React.useEffect(() => {
         const checkSchedules = () => {
@@ -157,7 +178,7 @@ export const EduMateProvider = ({ children }: { children: ReactNode }) => {
             const currentDateStr = now.toLocaleDateString();
 
             // 1. Group medications by time
-            const medsToTakeNow = medications.filter(m => m.time === currentTimeStr);
+            const medsToTakeNow = medications.filter(m => m.times && m.times.includes(currentTimeStr));
             if (medsToTakeNow.length > 0) {
                 const uniqueId = `meds-${currentDateStr}-${currentTimeStr}`;
                 if (!alertedInstances.current.has(uniqueId)) {
@@ -211,6 +232,17 @@ export const EduMateProvider = ({ children }: { children: ReactNode }) => {
 
     const clearChat = useCallback(() => {
         setMessages([]);
+    }, []);
+
+    const updateUserStats = useCallback((won: boolean) => {
+        setUserStats(prev => ({
+            gamesPlayed: prev.gamesPlayed + 1,
+            gamesWon: prev.gamesWon + (won ? 1 : 0)
+        }));
+    }, []);
+
+    const resetUserStats = useCallback(() => {
+        setUserStats({ gamesPlayed: 0, gamesWon: 0 });
     }, []);
 
     const updateLearningProfile = useCallback((profile: LearningProfileType) => {
@@ -304,7 +336,7 @@ Regla de Oro: Inicia la interacción saludando a ${userName} de forma muy cálid
         setIsGenerating(true);
 
         try {
-            const medsContext = medications.map(m => `- ${m.name} (${m.dose}): ${m.descripcionVisual}, a las ${m.time}. Observaciones: ${m.observaciones || 'Ninguna'}`).join('\n');
+            const medsContext = medications.map(m => `- ${m.name} (${m.dose}): ${m.descripcionVisual}, a las ${m.times?.join(' y ')}. Observaciones: ${m.observaciones || 'Ninguna'}`).join('\n');
             const prompt = `INSTRUCCIÓN DE SISTEMA: Actúa como un asistente virtual de apoyo al paciente. El usuario tiene registrada actualmente la siguiente medicación:\n${medsContext}\n\nEl usuario te va a consultar sobre estos medicamentos. IMPORTANTE: Proporciona información general basada en los prospectos. Bajo ninguna circunstancia des consejos médicos, cambies dosis, ni sugieras diagnósticos. Termina SIEMPRE tu respuesta obligatoriamente con esta frase exacta: ⚠️ Recuerda que soy una IA de apoyo. Para cualquier duda importante o cambio en tu tratamiento, debes consultar siempre con tu médico o farmacéutico. Haz ahora una breve introducción preguntándole al usuario: "¿En qué puedo ayudarte hoy con tu medicación?" y muestra amabilidad.`;
 
             const apiMessages = [{ role: 'system', content: prompt }] as const;
@@ -420,7 +452,10 @@ REGLA DE EMPATÍA: Si el usuario te saluda y ves que tiene una cita HOY o MAÑAN
         activeAlerts,
         dismissAlert,
         startMedicationConsult,
-        isMounted
+        isMounted,
+        userStats,
+        updateUserStats,
+        resetUserStats
     };
 
     if (!isMounted) {

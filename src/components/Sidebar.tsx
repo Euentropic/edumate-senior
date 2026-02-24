@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useEduMate } from '../context/EduMateContext';
-import { Bot, CheckSquare, TrendingUp, Stethoscope, UserCircle, HeartPulse, Pill } from 'lucide-react';
+import { Bot, CheckSquare, TrendingUp, Stethoscope, UserCircle, HeartPulse, Pill, Gamepad2 } from 'lucide-react';
 
 export default function Sidebar() {
     const { activeTab, setActiveTab, aiName, startMedicationConsult } = useEduMate();
@@ -54,6 +54,13 @@ export default function Sidebar() {
                         className={`flex items-center gap-3 w-full p-3 rounded-xl font-medium transition-colors ${activeTab === 'progreso' ? 'bg-emerald-100/50 text-slate-800 shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}>
                         <TrendingUp className={`w-5 h-5 ${activeTab === 'progreso' ? 'text-emerald-600' : ''}`} />
                         <span className="flex-1 text-left">Mi Resumen</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('juegos')}
+                        className={`flex items-center gap-3 w-full p-3 rounded-xl font-medium transition-colors ${activeTab === 'juegos' ? 'bg-indigo-100/50 text-slate-800 shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}>
+                        <Gamepad2 className={`w-5 h-5 ${activeTab === 'juegos' ? 'text-indigo-600' : ''}`} />
+                        <span className="flex-1 text-left">Gimnasio Mental</span>
                     </button>
 
                     <button

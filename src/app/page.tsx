@@ -8,6 +8,7 @@ import MedicalAgenda from "@/components/MedicalAgenda";
 import PharmacySheet from "@/components/PharmacySheet";
 import TasksDashboard from "@/components/TasksDashboard";
 import SeniorProfileModal from "@/components/SeniorProfileModal";
+import GamesModule from "@/components/GamesModule";
 import { useEduMate } from "@/context/EduMateContext";
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
           {activeTab === 'tutor' ? <ChatInterface /> : null}
           {activeTab === 'tareas' ? <TasksDashboard /> : null}
           {activeTab === 'progreso' ? <SeniorSummary /> : null}
+          {activeTab === 'juegos' ? <GamesModule /> : null}
           {activeTab === 'familia' ? <MedicalAgenda /> : null}
           {activeTab === 'hoja_farmacia' ? <PharmacySheet /> : null}
         </div>

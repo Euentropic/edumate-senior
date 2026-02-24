@@ -9,26 +9,48 @@ export default function MedicalAgenda() {
     const [medName, setMedName] = useState('');
     const [medDose, setMedDose] = useState('');
     const [medDesc, setMedDesc] = useState('');
-    const [medTime, setMedTime] = useState('');
+    const [medTimes, setMedTimes] = useState<string[]>(['']);
+    const [medDosesPerDay, setMedDosesPerDay] = useState<number>(1);
     const [medObs, setMedObs] = useState('');
 
     // Apps local state
     const [appDoc, setAppDoc] = useState('');
     const [appLoc, setAppLoc] = useState('');
     const [appDate, setAppDate] = useState('');
+    const handleDosesChange = (val: number) => {
+        const doses = isNaN(val) ? 1 : Math.max(1, Math.min(10, val));
+        setMedDosesPerDay(doses);
+        setMedTimes(prev => {
+            const newTimes = [...prev];
+            if (newTimes.length < doses) {
+                while (newTimes.length < doses) newTimes.push('');
+            } else if (newTimes.length > doses) {
+                newTimes.length = doses;
+            }
+            return newTimes;
+        });
+    };
+
+    const handleTimeChange = (index: number, value: string) => {
+        const newTimes = [...medTimes];
+        newTimes[index] = value;
+        setMedTimes(newTimes);
+    };
 
     const handleAddMed = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!medName || !medTime) return;
+        const validTimes = medTimes.filter(t => t.trim() !== '');
+        if (!medName || validTimes.length === 0) return;
 
         addMedication({
             name: medName,
             dose: medDose || '1 unidad',
             descripcionVisual: medDesc,
-            time: medTime,
+            times: validTimes,
+            dosesPerDay: medDosesPerDay,
             observaciones: medObs
         });
-        setMedName(''); setMedDose(''); setMedDesc(''); setMedTime(''); setMedObs('');
+        setMedName(''); setMedDose(''); setMedDesc(''); setMedTimes(['']); setMedDosesPerDay(1); setMedObs('');
     };
 
     const handleAddApp = (e: React.FormEvent) => {
@@ -76,8 +98,8 @@ export default function MedicalAgenda() {
                                 <input required value={medName} onChange={e => setMedName(e.target.value)} className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2" placeholder="Ej: Sintrom" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-700 uppercase">Hora</label>
-                                <input required type="time" value={medTime} onChange={e => setMedTime(e.target.value)} className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2" />
+                                <label className="text-xs font-bold text-slate-700 uppercase">Tomas al día</label>
+                                <input required type="number" min="1" max="10" value={medDosesPerDay} onChange={e => handleDosesChange(parseInt(e.target.value))} className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2" />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-bold text-slate-700 uppercase">Dosis</label>
@@ -88,11 +110,21 @@ export default function MedicalAgenda() {
                                 <input value={medDesc} onChange={e => setMedDesc(e.target.value)} className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2" placeholder="Ej: Blanca cruzada" />
                             </div>
                         </div>
+                        {medTimes.length > 0 && (
+                            <div className={`grid gap-4 ${medTimes.length > 2 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                                {medTimes.map((t, idx) => (
+                                    <div key={idx} className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-700 uppercase">Hora Toma {idx + 1}</label>
+                                        <input required type="time" value={t} onChange={e => handleTimeChange(idx, e.target.value)} className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-700 uppercase">Observaciones</label>
                             <input value={medObs} onChange={e => setMedObs(e.target.value)} className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2" placeholder="Ej: Tomar en ayunas" />
                         </div>
-                        <button type="submit" disabled={!medName || !medTime} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <button type="submit" disabled={!medName || medTimes.filter(t => t.trim() !== '').length === 0} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                             <Plus className="w-4 h-4" /> Añadir Medicina
                         </button>
                     </form>
@@ -108,7 +140,9 @@ export default function MedicalAgenda() {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-lg font-bold text-slate-800">{med.name}</span>
-                                                <span className="text-sm bg-white text-rose-700 px-3 py-1 rounded-lg font-bold border border-rose-100 shadow-sm tabular-nums">{med.time}</span>
+                                                <span className="text-sm bg-white text-rose-700 px-3 py-1 rounded-lg font-bold border border-rose-100 shadow-sm tabular-nums">
+                                                    {med.dosesPerDay} tomas diarias ({med.times?.join(', ')})
+                                                </span>
                                             </div>
                                             <div className="mt-2 space-y-1">
                                                 <p className="text-base text-slate-700">

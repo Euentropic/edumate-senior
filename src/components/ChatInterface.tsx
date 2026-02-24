@@ -2,12 +2,90 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useEduMate } from '../context/EduMateContext';
-import { Send, UserCircle, User, Loader2, Bell, Pill, Calendar, CheckSquare } from 'lucide-react';
+import { Send, UserCircle, User, Loader2, Bell, Pill, Calendar, CheckSquare, Mic, Volume2, VolumeX, Play } from 'lucide-react';
 
 export default function ChatInterface() {
     const { messages, sendMessage, generateGreeting, userName, aiName, activeAlerts, dismissAlert, addSystemMessage } = useEduMate();
     const [inputValue, setInputValue] = useState('');
+    const [isAutoReadEnabled, setIsAutoReadEnabled] = useState(false);
+    const [isListening, setIsListening] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const prevMessagesLength = useRef(0);
+    const recognitionRef = useRef<any>(null);
+
+    const playVoice = (text: string) => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop current
+            // Clean markdown and emojis
+            const textWithoutMarkdown = text.replace(/[*_~`#>-]/g, '');
+            const cleanedText = textWithoutMarkdown.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+
+            const utterance = new SpeechSynthesisUtterance(cleanedText);
+            utterance.lang = 'es-ES';
+            window.speechSynthesis.speak(utterance);
+        }
+    };
+
+    useEffect(() => {
+        if (messages.length > prevMessagesLength.current) {
+            const newMsg = messages[messages.length - 1];
+            if (newMsg.role === 'assistant' && isAutoReadEnabled && !newMsg.content.includes('INSTRUCCIÓN DE SISTEMA:')) {
+                playVoice(newMsg.content);
+            }
+        }
+        prevMessagesLength.current = messages.length;
+    }, [messages, isAutoReadEnabled]);
+
+    useEffect(() => {
+        return () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
+
+    const handleDictation = () => {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Tu navegador no soporta el dictado por voz. Intenta usar Chrome o Edge.');
+            return;
+        }
+
+        if (isListening) {
+            if (recognitionRef.current) recognitionRef.current.stop();
+            setIsListening(false);
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.lang = 'es-ES';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => setIsListening(true);
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            setInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
+            setIsListening(false);
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('Error STT:', event.error);
+            if (event.error === 'not-allowed') {
+                alert('Por favor, permite el acceso al micrófono para usar el dictado.');
+            }
+            setIsListening(false);
+        };
+
+        recognition.onend = () => setIsListening(false);
+
+        recognition.start();
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,17 +112,32 @@ export default function ChatInterface() {
     return (
         <div className="flex flex-col h-[100dvh] bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
             {/* Header */}
-            <div className="bg-white border-b border-slate-200 p-5 flex items-center gap-4 shadow-sm z-10 shrink-0">
-                <div className="bg-emerald-100/80 p-2.5 rounded-xl">
-                    <UserCircle className="w-8 h-8 text-emerald-700" />
-                </div>
-                <div>
-                    <h3 className="font-bold text-slate-800 text-2xl">{aiName}</h3>
-                    <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                        <p className="text-sm font-medium text-slate-500">En línea y listo para hablar</p>
+            <div className="bg-white border-b border-slate-200 p-5 flex flex-col sm:flex-row gap-4 sm:items-center justify-between shadow-sm z-10 shrink-0">
+                <div className="flex items-center gap-4">
+                    <div className="bg-emerald-100/80 p-2.5 rounded-xl">
+                        <UserCircle className="w-8 h-8 text-emerald-700" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-2xl">{aiName}</h3>
+                        <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                            <p className="text-sm font-medium text-slate-500">En línea y listo para hablar</p>
+                        </div>
                     </div>
                 </div>
+
+                <button
+                    onClick={() => {
+                        setIsAutoReadEnabled(!isAutoReadEnabled);
+                        if (isAutoReadEnabled && 'speechSynthesis' in window) {
+                            window.speechSynthesis.cancel();
+                        }
+                    }}
+                    className={`flex items-center gap-3 px-5 py-3 rounded-2xl border-2 transition-all shadow-sm active:scale-95 ${isAutoReadEnabled ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                >
+                    {isAutoReadEnabled ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
+                    <span className="font-bold text-lg">{isAutoReadEnabled ? 'Voz Activada' : 'Lectura Automática'}</span>
+                </button>
             </div>
 
             {/* Messages Area */}
@@ -77,14 +170,25 @@ export default function ChatInterface() {
                                 )}
                             </div>
 
-                            {/* Message Bubble - text-2xl as requested */}
-                            <div
-                                className={`max-w-[85%] px-6 py-5 shadow-sm text-2xl ${msg.role === 'user'
-                                    ? 'bg-teal-600 text-white rounded-[2rem] rounded-br-md font-medium'
-                                    : 'bg-white border-2 border-slate-200 text-slate-800 rounded-[2rem] rounded-bl-md font-normal font-sans'
-                                    }`}
-                            >
-                                <p className="whitespace-pre-wrap leading-[1.6]">{msg.content}</p>
+                            {/* Message Bubble y Botón de Escuchar */}
+                            <div className="flex flex-col gap-2 max-w-[85%]">
+                                <div
+                                    className={`px-6 py-5 shadow-sm text-2xl ${msg.role === 'user'
+                                        ? 'bg-teal-600 text-white rounded-[2rem] rounded-br-md font-medium'
+                                        : 'bg-white border-2 border-slate-200 text-slate-800 rounded-[2rem] rounded-bl-md font-normal font-sans'
+                                        }`}
+                                >
+                                    <p className="whitespace-pre-wrap leading-[1.6]">{msg.content}</p>
+                                </div>
+                                {msg.role === 'assistant' && (
+                                    <button
+                                        onClick={() => playVoice(msg.content)}
+                                        className="self-start text-sm text-indigo-700 font-bold bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-5 py-2.5 rounded-full flex items-center gap-2 transition-colors ml-4 shadow-sm active:scale-95"
+                                        aria-label="Escuchar mensaje en voz alta"
+                                    >
+                                        <Volume2 className="w-5 h-5" /> Escuchar
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))
@@ -140,6 +244,15 @@ export default function ChatInterface() {
             {/* Input Area */}
             <div className="p-4 bg-white border-t border-slate-200 z-10 shrink-0">
                 <form onSubmit={handleSend} className="flex gap-4 max-w-5xl mx-auto items-end">
+                    <button
+                        type="button"
+                        onClick={handleDictation}
+                        className={`h-[72px] px-6 rounded-3xl flex gap-3 items-center justify-center transition-all shadow-md hover:shadow-xl flex-shrink-0 border-2 active:scale-95 ${isListening ? 'bg-rose-50 border-rose-200 text-rose-600 animate-pulse' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                        aria-label="Dictar mensaje"
+                    >
+                        <Mic className="w-8 h-8" />
+                        {isListening && <span className="font-bold text-lg hidden sm:inline">Escuchando...</span>}
+                    </button>
                     <div className="relative flex-1">
                         <textarea
                             value={inputValue}

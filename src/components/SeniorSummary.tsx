@@ -1,9 +1,9 @@
 import React from 'react';
 import { useEduMate } from '../context/EduMateContext';
-import { Pill, CalendarHeart, Sun } from 'lucide-react';
+import { Pill, CalendarHeart, Sun, Award, RotateCcw } from 'lucide-react';
 
 export default function SeniorSummary() {
-    const { userName, medications, appointments } = useEduMate();
+    const { userName, medications, appointments, userStats, resetUserStats } = useEduMate();
 
     const todayString = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -33,25 +33,49 @@ export default function SeniorSummary() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="bg-rose-50 border border-rose-100 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-6 shadow-sm">
                     <div className="bg-white p-5 rounded-full text-rose-500 shadow-sm">
                         <Pill className="w-16 h-16" />
                     </div>
                     <h3 className="text-4xl font-bold text-slate-800">
-                        Tienes <span className="text-rose-600 font-black text-5xl mx-2">{medsToday}</span> medicinas
+                        <span className="text-rose-600 font-black text-5xl mx-2">{medsToday}</span> medicinas
                     </h3>
-                    <p className="text-3xl text-slate-600 font-medium">programadas para hoy</p>
+                    <p className="text-2xl text-slate-600 font-medium">para hoy</p>
                 </div>
 
                 <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-6 shadow-sm">
                     <div className="bg-white p-5 rounded-full text-indigo-500 shadow-sm">
                         <CalendarHeart className="w-16 h-16" />
                     </div>
-                    <h3 className="text-3xl font-bold text-slate-800 mb-2">Próxima cita médica:</h3>
-                    <p className="text-2xl text-indigo-800 font-bold bg-white px-6 py-4 rounded-2xl shadow-sm border border-indigo-100 w-full h-full flex items-center justify-center">
+                    <h3 className="text-3xl font-bold text-slate-800 mb-2">Próxima cita:</h3>
+                    <p className="text-xl text-indigo-800 font-bold bg-white px-4 py-3 rounded-2xl shadow-sm border border-indigo-100 w-full h-full flex items-center justify-center text-center">
                         {nextApptStr}
                     </p>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-100 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-4 shadow-sm relative">
+                    <button
+                        onClick={resetUserStats}
+                        className="absolute top-4 right-4 p-2 text-amber-600 hover:bg-amber-100 rounded-full transition-colors"
+                        aria-label="Reiniciar estadísticas"
+                    >
+                        <RotateCcw className="w-5 h-5" />
+                    </button>
+                    <div className="bg-white p-5 rounded-full text-amber-500 shadow-sm">
+                        <Award className="w-16 h-16" />
+                    </div>
+                    <h3 className="text-3xl font-bold text-slate-800 mb-2">Gimnasio Mental</h3>
+                    <div className="flex gap-4 w-full justify-center">
+                        <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border border-amber-100 text-center flex-1">
+                            <p className="text-3xl font-black text-amber-600">{userStats?.gamesPlayed || 0}</p>
+                            <p className="text-sm font-bold text-slate-500 uppercase mt-1">Jugadas</p>
+                        </div>
+                        <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border border-amber-100 text-center flex-1">
+                            <p className="text-3xl font-black text-emerald-600">{userStats?.gamesWon || 0}</p>
+                            <p className="text-sm font-bold text-slate-500 uppercase mt-1">Victorias</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
