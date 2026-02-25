@@ -42,12 +42,7 @@ export default function Sidebar() {
                         <span className="flex-1 text-left">Conversar</span>
                     </button>
 
-                    <button
-                        onClick={() => setActiveTab('tareas')}
-                        className={`flex items-center gap-3 w-full p-3 rounded-xl font-medium transition-colors ${activeTab === 'tareas' ? 'bg-emerald-100/50 text-slate-800 shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}>
-                        <CheckSquare className={`w-5 h-5 ${activeTab === 'tareas' ? 'text-emerald-600' : ''}`} />
-                        <span className="flex-1 text-left">Actividades</span>
-                    </button>
+
 
                     <button
                         onClick={() => setActiveTab('progreso')}

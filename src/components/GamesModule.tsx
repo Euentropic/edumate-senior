@@ -17,6 +17,8 @@ const GAMES = [
 
 import { WORDS } from '../data/wordBank';
 import { TRIVIAL_QUESTIONS, TrivialQuestion } from '../data/trivialBank';
+import { getDynamicWord } from '../services/wordService';
+import PasapalabraGame from './PasapalabraGame';
 
 const HangmanFigure = ({ mistakes }: { mistakes: number }) => {
     return (
@@ -45,6 +47,7 @@ function HangmanGame() {
     const [guessedLetters, setGuessedLetters] = useState<Set<string>>(new Set());
     const [mistakes, setMistakes] = useState(0);
     const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
+    const [isLoading, setIsLoading] = useState(true);
 
     const MAX_MISTAKES = 6;
 
@@ -62,18 +65,13 @@ function HangmanGame() {
         initGame(initialPlayed);
     }, []);
 
-    const initGame = (currentPlayed: string[] = playedWords) => {
-        let availableWords = WORDS.filter(w => !currentPlayed.includes(w));
+    const initGame = async (currentPlayed: string[] = playedWords) => {
+        setIsLoading(true);
+        setWord('');
+
+        const randomWord = await getDynamicWord(currentPlayed);
 
         let newPlayed = [...currentPlayed];
-        if (availableWords.length === 0) {
-            // Si se agota el diccionario (o no coinciden), se limpia el historial
-            availableWords = [...WORDS];
-            newPlayed = [];
-        }
-
-        const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-
         newPlayed.unshift(randomWord);
         if (newPlayed.length > 50) {
             newPlayed = newPlayed.slice(0, 50);
@@ -86,6 +84,7 @@ function HangmanGame() {
         setGuessedLetters(new Set());
         setMistakes(0);
         setGameState('playing');
+        setIsLoading(false);
     };
 
     const handleGuess = (letter: string) => {
@@ -132,16 +131,23 @@ function HangmanGame() {
                 <HangmanFigure mistakes={mistakes} />
 
                 {/* Word Display */}
-                <div className="flex flex-wrap justify-center gap-3">
-                    {word.split('').map((char, index) => (
-                        <div key={index} className="w-14 h-16 sm:w-16 sm:h-20 border-b-4 border-slate-800 flex items-center justify-center text-5xl font-black text-slate-800 uppercase bg-slate-50/50 rounded-t-xl">
-                            {gameState === 'lost' || guessedLetters.has(char) ? char : ''}
-                        </div>
-                    ))}
-                </div>
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-white border border-slate-100 shadow-sm rounded-2xl animate-pulse">
+                        <div className="w-8 h-8 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin mb-4"></div>
+                        <p className="text-xl font-bold text-slate-600">Generando palabra...</p>
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {word.split('').map((char, index) => (
+                            <div key={index} className="w-14 h-16 sm:w-16 sm:h-20 border-b-4 border-slate-800 flex items-center justify-center text-5xl font-black text-slate-800 uppercase bg-slate-50/50 rounded-t-xl">
+                                {gameState === 'lost' || guessedLetters.has(char) ? char : ''}
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Game Over States */}
-                {gameState !== 'playing' && (
+                {!isLoading && gameState !== 'playing' && (
                     <div className={`p-6 rounded-2xl border-2 text-center w-full max-w-md animate-in zoom-in-95 ${gameState === 'won' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
                         <h4 className="text-3xl font-black mb-2">{gameState === 'won' ? '¡Has Ganado! 🎉' : '¡Fin del Juego! 😢'}</h4>
                         {gameState === 'lost' && <p className="text-xl mb-6 font-medium">La palabra era: <span className="font-bold">{word}</span></p>}
@@ -152,7 +158,7 @@ function HangmanGame() {
                 )}
 
                 {/* Keyboard */}
-                {gameState === 'playing' && (
+                {!isLoading && gameState === 'playing' && (
                     <div className="flex flex-wrap justify-center gap-2 max-w-3xl mt-4">
                         {alphabet.map(letter => {
                             const isGuessed = guessedLetters.has(letter);
@@ -462,6 +468,8 @@ export default function GamesModule() {
                         <HangmanGame />
                     ) : selectedGame === 'trivial' ? (
                         <TrivialGame />
+                    ) : selectedGame === 'pasapalabra' ? (
+                        <PasapalabraGame />
                     ) : (
                         <PlaceholderGame name={GAMES.find(g => g.id === selectedGame)?.name || ''} />
                     )}

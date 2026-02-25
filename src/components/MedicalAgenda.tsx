@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Bell, Clock, Award, Pill, Calendar, Plus, Trash2, CalendarHeart, MapPin } from 'lucide-react';
+import { Shield, Bell, Clock, Award, Pill, Calendar, Plus, Trash2, CalendarHeart, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEduMate } from '../context/EduMateContext';
 
 export default function MedicalAgenda() {
@@ -17,6 +17,18 @@ export default function MedicalAgenda() {
     const [appDoc, setAppDoc] = useState('');
     const [appLoc, setAppLoc] = useState('');
     const [appDate, setAppDate] = useState('');
+
+    // Calendar local state
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const prevMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    };
+
+    const nextMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    };
+
     const handleDosesChange = (val: number) => {
         const doses = isNaN(val) ? 1 : Math.max(1, Math.min(10, val));
         setMedDosesPerDay(doses);
@@ -224,11 +236,23 @@ export default function MedicalAgenda() {
 
                 {/* COLUMN 3: Calendario Visual */}
                 <div className="col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
-                    <div className="flex items-center gap-3 pb-3 border-b border-slate-100 mb-4">
-                        <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-                            <Calendar className="w-6 h-6" />
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                                <Calendar className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800 capitalize">
+                                {currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+                            </h3>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800">Este Mes</h3>
+                        <div className="flex items-center gap-2">
+                            <button onClick={prevMonth} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors" aria-label="Mes anterior">
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <button onClick={nextMonth} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors" aria-label="Mes siguiente">
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-7 gap-1 text-center mb-2">
@@ -238,9 +262,14 @@ export default function MedicalAgenda() {
                     </div>
 
                     <div className="grid grid-cols-7 gap-1">
-                        {Array.from({ length: 30 }).map((_, i) => {
+                        {Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate() }).map((_, i) => {
                             const dayNum = i + 1;
-                            const hasAppointment = appointments.some(app => new Date(app.datetime).getDate() === dayNum);
+                            const hasAppointment = appointments.some(app => {
+                                const appDate = new Date(app.datetime);
+                                return appDate.getDate() === dayNum &&
+                                    appDate.getMonth() === currentDate.getMonth() &&
+                                    appDate.getFullYear() === currentDate.getFullYear();
+                            });
 
                             return (
                                 <div
@@ -264,10 +293,16 @@ export default function MedicalAgenda() {
 
                         <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Resumen del Mes</h4>
                         <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                            {appointments.length === 0 ? (
+                            {appointments.filter(app => {
+                                const appDate = new Date(app.datetime);
+                                return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
+                            }).length === 0 ? (
                                 <p className="text-sm text-slate-400 italic">Mes libre de citas.</p>
                             ) : (
-                                [...appointments].sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()).map(app => (
+                                [...appointments].filter(app => {
+                                    const appDate = new Date(app.datetime);
+                                    return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
+                                }).sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()).map(app => (
                                     <div key={app.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm flex justify-between items-center">
                                         <p className="font-bold text-slate-800 truncate pr-2">{app.doctor}</p>
                                         <p className="text-indigo-600 font-semibold shrink-0">{new Date(app.datetime).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
