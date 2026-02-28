@@ -17,8 +17,10 @@ const GAMES = [
 
 import { WORDS } from '../data/wordBank';
 import { TRIVIAL_QUESTIONS, TrivialQuestion } from '../data/trivialBank';
-import { getDynamicWord } from '../services/wordService';
+import { getDynamicWord, getPlayedWordsHistory, addPlayedWordToHistory } from '../services/wordService';
 import PasapalabraGame from './PasapalabraGame';
+import CrosswordGame from './CrosswordGame';
+import MazeGame from './MazeGame';
 
 const HangmanFigure = ({ mistakes }: { mistakes: number }) => {
     return (
@@ -43,7 +45,7 @@ const HangmanFigure = ({ mistakes }: { mistakes: number }) => {
 function HangmanGame() {
     const { updateUserStats } = useEduMate();
     const [word, setWord] = useState('');
-    const [playedWords, setPlayedWords] = useState<string[]>([]);
+
     const [guessedLetters, setGuessedLetters] = useState<Set<string>>(new Set());
     const [mistakes, setMistakes] = useState(0);
     const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
@@ -52,33 +54,17 @@ function HangmanGame() {
     const MAX_MISTAKES = 6;
 
     useEffect(() => {
-        let initialPlayed: string[] = [];
-        try {
-            const stored = localStorage.getItem('hangman_played_words');
-            if (stored) {
-                initialPlayed = JSON.parse(stored);
-                setPlayedWords(initialPlayed);
-            }
-        } catch (e) {
-            console.error('Error parsing played words from localStorage:', e);
-        }
-        initGame(initialPlayed);
+        initGame();
     }, []);
 
-    const initGame = async (currentPlayed: string[] = playedWords) => {
+    const initGame = async () => {
         setIsLoading(true);
         setWord('');
 
+        const currentPlayed = getPlayedWordsHistory();
         const randomWord = await getDynamicWord(currentPlayed);
 
-        let newPlayed = [...currentPlayed];
-        newPlayed.unshift(randomWord);
-        if (newPlayed.length > 50) {
-            newPlayed = newPlayed.slice(0, 50);
-        }
-
-        setPlayedWords(newPlayed);
-        localStorage.setItem('hangman_played_words', JSON.stringify(newPlayed));
+        addPlayedWordToHistory(randomWord);
 
         setWord(randomWord);
         setGuessedLetters(new Set());
@@ -151,7 +137,7 @@ function HangmanGame() {
                     <div className={`p-6 rounded-2xl border-2 text-center w-full max-w-md animate-in zoom-in-95 ${gameState === 'won' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
                         <h4 className="text-3xl font-black mb-2">{gameState === 'won' ? '¡Has Ganado! 🎉' : '¡Fin del Juego! 😢'}</h4>
                         {gameState === 'lost' && <p className="text-xl mb-6 font-medium">La palabra era: <span className="font-bold">{word}</span></p>}
-                        <button onClick={() => initGame(playedWords)} className={`px-8 py-4 rounded-xl font-bold text-white text-xl shadow-md w-full transition-transform active:scale-95 ${gameState === 'won' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
+                        <button onClick={initGame} className={`px-8 py-4 rounded-xl font-bold text-white text-xl shadow-md w-full transition-transform active:scale-95 ${gameState === 'won' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
                             Jugar de Nuevo
                         </button>
                     </div>
@@ -470,15 +456,21 @@ export default function GamesModule() {
                         <TrivialGame />
                     ) : selectedGame === 'pasapalabra' ? (
                         <PasapalabraGame />
+                    ) : selectedGame === 'crucigrama' ? (
+                        <CrosswordGame />
+                    ) : selectedGame === 'laberinto' ? (
+                        <MazeGame />
                     ) : (
                         <PlaceholderGame name={GAMES.find(g => g.id === selectedGame)?.name || ''} />
                     )}
                 </div>
 
-                {/* 30% Mini Chat Area */}
-                <div className="flex-[3] min-h-[250px] md:min-h-0 relative z-10">
-                    <MiniChatAssistant />
-                </div>
+                {/* Mini Chat Area (Hidden in Maze Game) */}
+                {selectedGame !== 'laberinto' && (
+                    <div className="flex-[3] min-h-[250px] md:min-h-0 relative z-10 shrink-0 border-t border-slate-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+                        <MiniChatAssistant />
+                    </div>
+                )}
             </div>
 
         </div>

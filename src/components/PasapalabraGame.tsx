@@ -5,6 +5,8 @@ import { useEduMate } from '../context/EduMateContext';
 import { PASAPALABRA_BANK } from '../data/pasapalabraBank';
 import { getPasapalabraTurn } from '../services/pasapalabraService';
 import { PlayCircle, Check, X, RotateCcw, Timer } from 'lucide-react';
+import { normalizeSpanishWord } from '../utils/textUtils';
+import { addPlayedWordToHistory } from '../services/wordService';
 
 type LetterStatus = 'pending' | 'current' | 'correct' | 'incorrect';
 
@@ -102,13 +104,16 @@ export default function PasapalabraGame() {
         if (!inputValue.trim() || gameState !== 'playing' || isLoading || solutionMessage) return;
 
         const currentLetter = letters[currentIndex];
-        const isCorrect = inputValue.trim().toUpperCase() === currentLetter.word?.toUpperCase();
+        const isCorrect = normalizeSpanishWord(inputValue.trim()) === normalizeSpanishWord(currentLetter.word || '');
 
         if (isCorrect) {
             const newLetters = [...letters];
             newLetters[currentIndex].status = 'correct';
             setLetters(newLetters);
             setInputValue('');
+            if (currentLetter.word) {
+                addPlayedWordToHistory(currentLetter.word);
+            }
             await advanceToNextPending(newLetters);
         } else {
             setInputValue(''); // Limpia el input inmediatamente
