@@ -21,34 +21,20 @@ const LETTER_VALUES: Record<string, number> = {
 const TARGET_SCORE = 50;
 const SWAP_PENALTY = 3;
 
-// Función de apoyo para garantizar vocales
+const SCRABBLE_BAG = [
+    ...'A'.repeat(12), ...'E'.repeat(12), ...'I'.repeat(6), ...'O'.repeat(9), ...'U'.repeat(5),
+    ...'B'.repeat(2), ...'C'.repeat(4), ...'D'.repeat(5), ...'F'.repeat(1), ...'G'.repeat(2),
+    ...'H'.repeat(2), ...'J'.repeat(1), ...'L'.repeat(4), ...'M'.repeat(2), ...'N'.repeat(5),
+    ...'Ñ'.repeat(1), ...'P'.repeat(2), ...'Q'.repeat(1), ...'R'.repeat(5), ...'S'.repeat(6),
+    ...'T'.repeat(4), ...'V'.repeat(1), ...'X'.repeat(1), ...'Y'.repeat(1), ...'Z'.repeat(1)
+];
+
+// Función de apoyo para obtener letras
 const generateLetters = (count: number): string[] => {
-    const bag = "AABCDEEFGHIIJKLMNÑOOPQRSTUUVWXYZ".split('');
-    const vowels = ['A', 'E', 'I', 'O', 'U'];
     let result: string[] = [];
-
-    // Si pregeneramos el rack de 7 desde 0, o robamos varias:
-    // Hacemos el random normal
     for (let i = 0; i < count; i++) {
-        result.push(bag[Math.floor(Math.random() * bag.length)]);
+        result.push(SCRABBLE_BAG[Math.floor(Math.random() * SCRABBLE_BAG.length)]);
     }
-
-    // Comprobar la cuota de 2 vocales mínimo si es que se piden 7 (o si se piden menos, se ajustará luego junto con el atril entero, pero para simplificar, garantizamos al menos 1 o 2).
-    // La forma ideal: se generan, se cuenta.
-    const currentVowelsCount = result.filter(v => vowels.includes(v)).length;
-    let neededVowels = Math.min(count, 2) - currentVowelsCount;
-
-    while (neededVowels > 0) {
-        // Encontrar una consonante para reemplazar
-        const consIndex = result.findIndex(v => !vowels.includes(v));
-        if (consIndex !== -1) {
-            result[consIndex] = vowels[Math.floor(Math.random() * vowels.length)];
-            neededVowels--;
-        } else {
-            break; // Todo son vocales ya (raro si faltan, pero por seguridad)
-        }
-    }
-
     return result;
 };
 
@@ -332,28 +318,11 @@ export default function ApalabradosGame() {
         );
         setBoard(newBoard);
 
-        // Reponer inteligentemente (garantizando 2 vocales en TODO el atril resultante si es posible)
+        // Reponer atril
         let currentRack = [...rack];
-        const emptyCount = currentRack.filter(l => l === null).length;
-        const newLetters = generateLetters(emptyCount);
-
-        let newLetterIdx = 0;
         for (let i = 0; i < 7; i++) {
             if (currentRack[i] === null) {
-                currentRack[i] = newLetters[newLetterIdx++];
-            }
-        }
-
-        // Revisión final de seguridad de vocales para el atril completo resultante
-        const vowels = ['A', 'E', 'I', 'O', 'U'];
-        let currentVowels = currentRack.filter(l => l && vowels.includes(l)).length;
-        while (currentVowels < 2) {
-            const consIdx = currentRack.findIndex(l => l && !vowels.includes(l));
-            if (consIdx !== -1) {
-                currentRack[consIdx] = vowels[Math.floor(Math.random() * vowels.length)];
-                currentVowels++;
-            } else {
-                break;
+                currentRack[i] = SCRABBLE_BAG[Math.floor(Math.random() * SCRABBLE_BAG.length)];
             }
         }
 
@@ -401,7 +370,6 @@ export default function ApalabradosGame() {
     };
 
     const handlePass = () => {
-        const bag = "AABCDEEFGHIIJKLMNÑOOPQRSTUUVWXYZ".split('');
 
         let currentRack = [...rack];
         let currentBoard = [...board];

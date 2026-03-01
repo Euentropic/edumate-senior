@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useEduMate } from '../context/EduMateContext';
 import { Send, UserCircle, User, Gamepad2, FileQuestion, HelpCircle, Trophy, Search } from 'lucide-react';
 import { aiService } from '../services/aiService';
@@ -192,6 +192,15 @@ function PlaceholderGame({ name }: { name: string }) {
     );
 }
 
+const shuffleArray = <T,>(array: T[]): T[] => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+};
+
 function TrivialGame() {
     const { updateUserStats } = useEduMate();
     const [questions, setQuestions] = useState<TrivialQuestion[]>([]);
@@ -200,6 +209,7 @@ function TrivialGame() {
     const [gameState, setGameState] = useState<'playing' | 'ended'>('playing');
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
 
     const QUESTIONS_PER_GAME = 10;
     const MIN_SCORE_TO_WIN = 5;
@@ -218,6 +228,18 @@ function TrivialGame() {
         setSelectedOption(null);
         setIsAnimating(false);
     };
+
+    useEffect(() => {
+        const currentQ = questions[currentIndex];
+        if (currentQ && currentQ.options) {
+            const optionsCopy = [...currentQ.options];
+            for (let i = optionsCopy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [optionsCopy[i], optionsCopy[j]] = [optionsCopy[j], optionsCopy[i]];
+            }
+            setShuffledOptions(optionsCopy);
+        }
+    }, [currentIndex, questions]);
 
     const handleAnswer = (option: string) => {
         if (selectedOption || isAnimating || gameState !== 'playing') return;
@@ -284,7 +306,7 @@ function TrivialGame() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentQ.options.map((option, index) => {
+                    {shuffledOptions.map((option, index) => {
                         let btnClass = "bg-white border-2 border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-300";
 
                         if (selectedOption) {
