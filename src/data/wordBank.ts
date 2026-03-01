@@ -28,3 +28,24 @@ export const WORDS = [
     'CABEZA', 'PELO', 'OJO', 'OREJA', 'NARIZ', 'BOCA', 'DIENTE', 'LENGUA', 'CUELLO', 'HOMBRO',
     'BRAZO', 'MANO', 'DEDO', 'UÑA', 'PECHO', 'ESPALDA', 'BARRIGA', 'PIERNA', 'RODILLA', 'PIE'
 ];
+
+export const SOPA_WORDS = [
+    // 4 Letras (25 palabras)
+    'CASA', 'MESA', 'LUNA', 'GATO', 'TREN', 'ROSA', 'CAJA', 'BOTA', 'COPA', 'DADO',
+    'FOCA', 'JOYA', 'HOJA', 'LAGO', 'MANO', 'NUBE', 'OSOS', 'PATO', 'RANA', 'SOPA',
+    'TAZA', 'VASO', 'YATE', 'ZONA', 'TELA',
+    // 5 Letras (30 palabras)
+    'ARBOL', 'BARCO', 'COCHE', 'DULCE', 'FUEGO', 'GLOBO', 'HIELO', 'JABON', 'LAPIZ', 'MUNDO',
+    'NIEVE', 'OVEJA', 'PERRO', 'QUESO', 'RATON', 'SILLA', 'TIGRE', 'AVION', 'BRUJA', 'CEBRA',
+    'DUENDE', 'FAROL', 'MANTO', 'PLAYA', 'RELOJ', 'CISNE', 'CLIMA', 'FLOTA', 'LLAVE', 'RUEDA',
+    // 6 Letras (30 palabras)
+    'CAMINO', 'ABRAZO', 'BOSQUE', 'CABALLO', 'DELFIN', 'ENLACE', 'ESPEJO', 'FUENTE', 'GRANJA', 'HELADO',
+    'IGUANA', 'JINETE', 'LAGUNA', 'MADERA', 'NUMERO', 'ORBETA', 'PINTOR', 'QINTAL', 'REGALO', 'SIRENA',
+    'TIEMPO', 'VOLCAN', 'CABAÑA', 'ALAMBRE', 'BOTON', 'CEREZA', 'NIEBLA', 'PAJARO', 'CUADRO', 'TEJADO',
+    // 7 Letras (25 palabras)
+    'PLANETA', 'ESTRELLA', 'BALANZA', 'CARTAZO', 'DIBUJAR', 'ELEFANT', 'FRUTERO', 'GUITAR', 'HORARIO', 'IMPERIO',
+    'JILGUER', 'LIBRERO', 'MEDALLA', 'NARANJA', 'OCEANOS', 'PALACIO', 'RODILLA', 'SEMANAS', 'TELARAÑ', 'VENTANA',
+    'BISABUE', 'CALABAZ', 'LECHUGA', 'RECORDS', 'ZAPATOS',
+    // 8 Letras (10 palabras)
+    'MARIPOSA', 'ESCALERA', 'TELEFONO', 'GUITARRA', 'PANTALLA', 'TORMENTA', 'UNIVERSO', 'COMPUTAR', 'GUERRERO', 'PRINCESA'
+];

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useEduMate } from '../context/EduMateContext';
-import { Send, UserCircle, User, Gamepad2, FileQuestion, HelpCircle, Trophy } from 'lucide-react';
+import { Send, UserCircle, User, Gamepad2, FileQuestion, HelpCircle, Trophy, Search } from 'lucide-react';
 import { aiService } from '../services/aiService';
 
 const GAMES = [
@@ -12,7 +12,7 @@ const GAMES = [
     { id: 'crucigrama', name: 'Crucigrama' },
     { id: 'laberinto', name: 'Laberinto' },
     { id: 'apalabrados', name: 'Apalabrados' },
-    { id: 'mahjongg', name: 'Mahjongg' },
+    { id: 'sopa', name: 'Sopa de Letras' },
 ];
 
 import { WORDS } from '../data/wordBank';
@@ -21,6 +21,8 @@ import { getDynamicWord, getPlayedWordsHistory, addPlayedWordToHistory } from '.
 import PasapalabraGame from './PasapalabraGame';
 import CrosswordGame from './CrosswordGame';
 import MazeGame from './MazeGame';
+import ApalabradosGame from './ApalabradosGame';
+import SopaDeLetrasGame from './SopaDeLetrasGame';
 
 const HangmanFigure = ({ mistakes }: { mistakes: number }) => {
     return (
@@ -315,10 +317,10 @@ function TrivialGame() {
     );
 }
 
-function MiniChatAssistant() {
+function MiniChatAssistant({ gameName }: { gameName: string }) {
     const { aiName } = useEduMate();
     const [messages, setMessages] = useState<{ id: string, role: 'user' | 'assistant', content: string }[]>([
-        { id: 'sys-1', role: 'assistant', content: `¡Hola! Soy ${aiName}. Estoy aquí abajo si necesitas una pista o no entiendes cómo jugar.` }
+        { id: 'sys-1', role: 'assistant', content: `¡Hola! Soy ${aiName}. Estoy aquí abajo si necesitas una pista o no entiendes cómo jugar a ${gameName}.` }
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -327,6 +329,11 @@ function MiniChatAssistant() {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    useEffect(() => {
+        // Option to add a system message or change greeting when game changes
+        setMessages([{ id: Date.now().toString(), role: 'assistant', content: `¡Hola! Soy ${aiName}. Estoy aquí abajo si necesitas una pista o no entiendes cómo jugar a ${gameName}.` }]);
+    }, [gameName, aiName]);
 
     useEffect(() => {
         scrollToBottom();
@@ -342,7 +349,7 @@ function MiniChatAssistant() {
         setIsGenerating(true);
 
         try {
-            const prompt = `INSTRUCCIÓN DE SISTEMA: Eres ${aiName}, un asistente amigable dentro del "Gimnasio Mental" (una sección de juegos cognitivos para personas mayores). El usuario está jugando. Tu trabajo es darle ánimos, explicarle cómo jugar de forma muy sencilla, o darle pistas genéricas. No le des la solución exacta. Usa un tono muy paciente y cariñoso. Respuestas cortas.`;
+            const prompt = `INSTRUCCIÓN DE SISTEMA: Eres ${aiName}, un asistente amigable y paciente para personas mayores. Actualmente, el usuario está jugando al juego: ${gameName}. Si el usuario te pide ayuda, pistas o consejos, dáselos ESPECÍFICAMENTE sobre el juego ${gameName}. Sé breve, claro y motivador. No resuelvas el juego por él, solo dale estrategias.`;
 
             const apiMessages = [
                 { role: 'system', content: prompt },
@@ -434,16 +441,27 @@ export default function GamesModule() {
                     <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Gimnasio Mental</h2>
                 </div>
 
-                {GAMES.map(game => (
-                    <button
-                        key={game.id}
-                        onClick={() => setSelectedGame(game.id)}
-                        className={`flex items-center gap-3 px-4 py-3 md:py-4 rounded-xl font-bold transition-all shadow-sm shrink-0 whitespace-nowrap md:whitespace-normal ${selectedGame === game.id ? 'bg-indigo-600 text-white shadow-md scale-[1.02]' : 'bg-slate-50 text-slate-600 border border-slate-100 hover:bg-slate-100'}`}
-                    >
-                        <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />
-                        <span className="text-sm md:text-base">{game.name}</span>
-                    </button>
-                ))}
+                {GAMES.map(game => {
+                    const iconMap: Record<string, React.ReactNode> = {
+                        'ahorcado': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                        'trivial': <FileQuestion className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                        'pasapalabra': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                        'crucigrama': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                        'laberinto': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                        'apalabrados': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                        'sopa': <Search className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                    };
+                    return (
+                        <button
+                            key={game.id}
+                            onClick={() => setSelectedGame(game.id)}
+                            className={`flex items-center gap-3 px-4 py-3 md:py-4 rounded-xl font-bold transition-all shadow-sm shrink-0 whitespace-nowrap md:whitespace-normal ${selectedGame === game.id ? 'bg-indigo-600 text-white shadow-md scale-[1.02]' : 'bg-slate-50 text-slate-600 border border-slate-100 hover:bg-slate-100'}`}
+                        >
+                            {iconMap[game.id] || <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />}
+                            <span className="text-sm md:text-base">{game.name}</span>
+                        </button>
+                    )
+                })}
             </div>
 
             {/* Main Content Area */}
@@ -460,6 +478,10 @@ export default function GamesModule() {
                         <CrosswordGame />
                     ) : selectedGame === 'laberinto' ? (
                         <MazeGame />
+                    ) : selectedGame === 'apalabrados' ? (
+                        <ApalabradosGame />
+                    ) : selectedGame === 'sopa' ? (
+                        <SopaDeLetrasGame />
                     ) : (
                         <PlaceholderGame name={GAMES.find(g => g.id === selectedGame)?.name || ''} />
                     )}
@@ -468,7 +490,7 @@ export default function GamesModule() {
                 {/* Mini Chat Area (Hidden in Maze Game) */}
                 {selectedGame !== 'laberinto' && (
                     <div className="flex-[3] min-h-[250px] md:min-h-0 relative z-10 shrink-0 border-t border-slate-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
-                        <MiniChatAssistant />
+                        <MiniChatAssistant key={selectedGame} gameName={GAMES.find(g => g.id === selectedGame)?.name || ''} />
                     </div>
                 )}
             </div>
