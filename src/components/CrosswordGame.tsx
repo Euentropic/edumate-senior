@@ -66,13 +66,13 @@ export default function CrosswordGame() {
         });
 
         if (occupyingWords.length === 0) {
-            return 'bg-transparent border-transparent'; // Empty space
+            return 'bg-transparent border-2 border-transparent pointer-events-none'; // Empty space
         }
 
         const isSelected = occupyingWords.some(w => w.id === selectedWordId);
         const isCompleted = occupyingWords.every(w => completedWords.has(w.id)); // If all words on this cell are complete
 
-        let baseClass = 'border-2 cursor-pointer transition-colors flex items-center justify-center text-sm md:text-xl font-bold uppercase shadow-sm ';
+        let baseClass = 'border-2 cursor-pointer transition-colors text-sm md:text-xl font-bold uppercase shadow-sm ';
 
         if (isSelected) {
             baseClass += 'bg-blue-100 border-blue-400 text-blue-900';
@@ -251,7 +251,7 @@ export default function CrosswordGame() {
             gridCells.push(
                 <div
                     key={coord}
-                    className={`w-full h-full relative rounded-[10%] sm:rounded-lg ${cellClass}`}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 aspect-square flex items-center justify-center box-border flex-shrink-0 relative rounded-[10%] sm:rounded-lg ${cellClass}`}
                     onClick={() => isClickable && handleCellClick(x, y)}
                 >
                     {isClickable && startingWords.length > 0 && (
@@ -292,8 +292,8 @@ export default function CrosswordGame() {
             {/* Board Area */}
             <div className="flex-1 min-h-0 w-full flex items-center justify-center p-2">
                 <div
-                    className="grid w-full aspect-square m-auto gap-0.5 sm:gap-1 max-w-[min(100%,_45vh)]"
-                    style={{ gridTemplateColumns: `repeat(${currentLevel.gridSize.cols}, minmax(0, 1fr))` }}
+                    className="grid place-content-center m-auto gap-0.5 sm:gap-1"
+                    style={{ gridTemplateColumns: `repeat(${currentLevel.gridSize.cols}, max-content)` }}
                 >
                     {gridCells}
                 </div>

@@ -9,7 +9,7 @@ const GAMES = [
     { id: 'ahorcado', name: 'El Ahorcado' },
     { id: 'trivial', name: 'Trivial Mental' },
     { id: 'pasapalabra', name: 'Pasapalabra' },
-    { id: 'crucigrama', name: 'Crucigrama' },
+    { id: 'domino', name: 'Dominó Clásico' },
     { id: 'laberinto', name: 'Laberinto' },
     { id: 'apalabrados', name: 'Apalabrados' },
     { id: 'sopa', name: 'Sopa de Letras' },
@@ -19,7 +19,7 @@ import { WORDS } from '../data/wordBank';
 import { TRIVIAL_QUESTIONS, TrivialQuestion } from '../data/trivialBank';
 import { getDynamicWord, getPlayedWordsHistory, addPlayedWordToHistory } from '../services/wordService';
 import PasapalabraGame from './PasapalabraGame';
-import CrosswordGame from './CrosswordGame';
+import DominoesGame from './DominoesGame';
 import MazeGame from './MazeGame';
 import ApalabradosGame from './ApalabradosGame';
 import SopaDeLetrasGame from './SopaDeLetrasGame';
@@ -468,7 +468,7 @@ export default function GamesModule() {
                         'ahorcado': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
                         'trivial': <FileQuestion className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
                         'pasapalabra': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
-                        'crucigrama': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
+                        'domino': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
                         'laberinto': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
                         'apalabrados': <Gamepad2 className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
                         'sopa': <Search className={`w-5 h-5 ${selectedGame === game.id ? 'text-indigo-200' : 'text-slate-400'}`} />,
@@ -496,8 +496,8 @@ export default function GamesModule() {
                         <TrivialGame />
                     ) : selectedGame === 'pasapalabra' ? (
                         <PasapalabraGame />
-                    ) : selectedGame === 'crucigrama' ? (
-                        <CrosswordGame />
+                    ) : selectedGame === 'domino' ? (
+                        <DominoesGame />
                     ) : selectedGame === 'laberinto' ? (
                         <MazeGame />
                     ) : selectedGame === 'apalabrados' ? (
@@ -509,8 +509,8 @@ export default function GamesModule() {
                     )}
                 </div>
 
-                {/* Mini Chat Area (Hidden in Maze Game) */}
-                {selectedGame !== 'laberinto' && (
+                {/* Mini Chat Area (Hidden in Maze and Dominoes Game) */}
+                {selectedGame !== 'laberinto' && selectedGame !== 'domino' && (
                     <div className="flex-[3] min-h-[250px] md:min-h-0 relative z-10 shrink-0 border-t border-slate-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
                         <MiniChatAssistant key={selectedGame} gameName={GAMES.find(g => g.id === selectedGame)?.name || ''} />
                     </div>
