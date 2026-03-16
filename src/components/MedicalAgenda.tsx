@@ -29,6 +29,10 @@ export default function MedicalAgenda() {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
     };
 
+    const getFirstDayOfMonth = () => {
+        return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+    };
+
     const handleDosesChange = (val: number) => {
         const doses = isNaN(val) ? 1 : Math.max(1, Math.min(10, val));
         setMedDosesPerDay(doses);
@@ -262,6 +266,9 @@ export default function MedicalAgenda() {
                     </div>
 
                     <div className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: getFirstDayOfMonth() === 0 ? 6 : getFirstDayOfMonth() - 1 }).map((_, i) => (
+                            <div key={`blank-${i}`} className="aspect-square"></div>
+                        ))}
                         {Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate() }).map((_, i) => {
                             const dayNum = i + 1;
                             const hasAppointment = appointments.some(app => {
